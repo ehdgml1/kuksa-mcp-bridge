@@ -1,0 +1,99 @@
+VERSION ""
+
+NS_ :
+    NS_DESC_
+    CM_
+    BA_DEF_
+    BA_
+    VAL_
+    CAT_DEF_
+    CAT_
+    FILTER
+    BA_DEF_DEF_
+    EV_DEF_
+    EV_
+    ENVVAR_DATA_
+    SGTYPE_
+    SGTYPE_VAL_
+    BA_DEF_SGTYPE_
+    BA_DEF_SGTYPE_VAL_
+    BA_DEF_REL_
+    BA_DEF_DEF_REL_
+    BA_REL_
+    BA_DEF_DEF_
+    BU_SG_REL_
+    BU_EV_REL_
+    BU_BO_REL_
+    SG_MUL_VAL_
+
+BS_:
+
+BU_: DI BMS HVAC GW
+
+BO_ 280 DI_torque2: 8 DI
+ SG_ DI_vehicleSpeed : 0|16@1+ (0.1,0) [0|6553.5] "km/h" GW
+ SG_ DI_odometer : 16|32@1+ (0.001,0) [0|4294967.295] "km" GW
+
+BO_ 609 DI_systemStatus: 8 DI
+ SG_ DI_motorRPM : 0|16@1+ (1,0) [0|16000] "rpm" GW
+ SG_ DI_inverterTemp : 16|8@1+ (1,-40) [-40|215] "degC" GW
+
+BO_ 850 BMS_energyStatus: 8 BMS
+ SG_ BMS_stateOfCharge : 0|16@1+ (0.01,0) [0|100] "%" GW
+ SG_ BMS_packVoltage : 16|16@1+ (0.01,0) [0|655.35] "V" GW
+ SG_ BMS_packTemp : 32|8@1+ (0.5,-40) [-40|87.5] "degC" GW
+
+BO_ 579 HVAC_status: 4 HVAC
+ SG_ HVAC_cabinTemp : 0|8@1+ (0.5,-40) [-40|87.5] "degC" GW
+ SG_ HVAC_setpointTemp : 8|8@1+ (0.5,-40) [-40|87.5] "degC" GW
+
+CM_ BU_ DI "Drive Inverter — controls traction motor, reports speed/odometer";
+CM_ BU_ BMS "Battery Management System — reports pack SOC, voltage, temperature";
+CM_ BU_ HVAC "HVAC controller — reports cabin ambient and driver setpoint temperature";
+CM_ BU_ GW "Gateway ECU — receives all broadcast signals";
+
+CM_ BO_ 280 "DI_torque2 (0x118): Drivetrain status frame broadcast at 100 ms.
+  Contains vehicle speed and total odometer from the Drive Inverter.";
+CM_ BO_ 609 "DI_systemStatus (0x261): Drive Inverter thermal/electrical status at 100 ms.
+  Motor RPM is used as the VSS CombustionEngine.Speed equivalent for EVs.
+  Inverter temperature is mapped to VSS CombustionEngine.ECT (motor thermal proxy).";
+CM_ BO_ 850 "BMS_energyStatus (0x352): Battery pack status broadcast at 1000 ms.
+  State of charge (0.01 % / LSB), pack voltage (0.01 V / LSB), pack temperature
+  with -40 degC offset and 0.5 degC / LSB resolution.";
+CM_ BO_ 579 "HVAC_status (0x243): HVAC controller status at 1000 ms.
+  cabinTemp = measured cabin ambient.  setpointTemp = driver-side target.
+  Both use 0.5 degC / LSB with -40 degC offset.";
+
+CM_ SG_ 280 DI_vehicleSpeed "Vehicle speed derived from wheel tick counters.
+  Scale: 0.1 km/h per LSB.  Range: 0 – 200 km/h in normal operation.";
+CM_ SG_ 280 DI_odometer "Total distance driven, wraps at ~4294967 km.
+  Scale: 0.001 km per LSB (i.e. 1 m per LSB).";
+CM_ SG_ 609 DI_motorRPM "Rotor electrical RPM of the rear permanent-magnet motor.
+  Useful as a proxy for VSS CombustionEngine.Speed in EV context.";
+CM_ SG_ 609 DI_inverterTemp "Peak IGBT junction temperature inside the inverter module.
+  Mapped to VSS CombustionEngine.ECT as the closest thermal health signal.
+  raw_value = (temp_degC + 40); temp_degC = raw_value - 40.";
+CM_ SG_ 850 BMS_stateOfCharge "Usable state of charge reported by BMS.
+  Scale: 0.01 % per LSB.  Full pack = 10000 (raw).";
+CM_ SG_ 850 BMS_packVoltage "Total high-voltage pack voltage.
+  Scale: 0.01 V per LSB.  Nominal range 300 – 420 V.";
+CM_ SG_ 850 BMS_packTemp "Volume-averaged battery cell temperature.
+  raw_value = (temp_degC + 40) / 0.5; temp_degC = raw_value * 0.5 - 40.";
+CM_ SG_ 579 HVAC_cabinTemp "Cabin ambient temperature measured by HVAC sensor.
+  raw_value = (temp_degC + 40) / 0.5; temp_degC = raw_value * 0.5 - 40.";
+CM_ SG_ 579 HVAC_setpointTemp "Driver-side temperature setpoint currently active.
+  raw_value = (temp_degC + 40) / 0.5; temp_degC = raw_value * 0.5 - 40.";
+
+BA_DEF_ BO_ "BusType" STRING;
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ SG_ "SystemSignalLongSymbol" STRING;
+
+BA_DEF_DEF_ "BusType" "CAN";
+BA_DEF_DEF_ "GenMsgCycleTime" 100;
+BA_DEF_DEF_ "SystemSignalLongSymbol" "";
+
+BA_ "BusType" "CAN";
+BA_ "GenMsgCycleTime" BO_ 280 100;
+BA_ "GenMsgCycleTime" BO_ 609 100;
+BA_ "GenMsgCycleTime" BO_ 850 1000;
+BA_ "GenMsgCycleTime" BO_ 579 1000;

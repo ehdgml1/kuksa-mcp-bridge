@@ -1,0 +1,7 @@
+FROM ghcr.io/grpc-ecosystem/grpc-health-probe:v0.4.38 AS probe
+FROM busybox:musl AS busybox
+FROM ghcr.io/eclipse-kuksa/kuksa-databroker:latest
+
+COPY --from=probe /ko-app/grpc-health-probe /bin/grpc_health_probe
+COPY --from=busybox /bin/sh /bin/sh
+COPY --from=busybox /bin/grep /bin/grep

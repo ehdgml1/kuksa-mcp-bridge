@@ -1,0 +1,165 @@
+{
+  "_comment": "Tesla Model 3 VSS-DBC mapping for kuksa-can-provider.",
+  "_vehicle": "Tesla Model 3 (Long Range / Performance, 2019-2023)",
+  "_dbc_file": "tesla_model3.dbc",
+  "_description": "Maps Tesla CAN signals to COVESA VSS paths. Swap this file (and the DBC) to switch vehicle profiles without touching any MCP server code.",
+  "Vehicle": {
+    "type": "branch",
+    "children": {
+      "Speed": {
+        "datatype": "float",
+        "type": "sensor",
+        "description": "Vehicle speed in km/h, sourced from DI_vehicleSpeed (DI_torque2 0x118).",
+        "unit": "km/h",
+        "min": 0.0,
+        "max": 200.0,
+        "dbc2vss": {
+          "signal": "DI_vehicleSpeed",
+          "interval_ms": 100
+        }
+      },
+      "TraveledDistance": {
+        "datatype": "float",
+        "type": "sensor",
+        "description": "Total odometer reading in km, sourced from DI_odometer (DI_torque2 0x118).",
+        "unit": "km",
+        "min": 0.0,
+        "max": 4294967.295,
+        "dbc2vss": {
+          "signal": "DI_odometer",
+          "interval_ms": 1000
+        }
+      },
+      "Powertrain": {
+        "type": "branch",
+        "children": {
+          "CombustionEngine": {
+            "type": "branch",
+            "_comment": "VSS CombustionEngine branch reused for EV drivetrain signals. Motor RPM maps to Speed; inverter temperature maps to ECT.",
+            "children": {
+              "Speed": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Rear motor rotor RPM, sourced from DI_motorRPM (DI_systemStatus 0x261). Used as VSS CombustionEngine.Speed equivalent for EVs.",
+                "unit": "rpm",
+                "min": 0.0,
+                "max": 16000.0,
+                "dbc2vss": {
+                  "signal": "DI_motorRPM",
+                  "interval_ms": 100
+                }
+              },
+              "ECT": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Drive inverter IGBT peak temperature in degC, sourced from DI_inverterTemp (DI_systemStatus 0x261). Used as VSS CombustionEngine.ECT proxy for EV thermal health.",
+                "unit": "celsius",
+                "min": -40.0,
+                "max": 215.0,
+                "dbc2vss": {
+                  "signal": "DI_inverterTemp",
+                  "interval_ms": 1000
+                }
+              }
+            }
+          },
+          "TractionBattery": {
+            "type": "branch",
+            "children": {
+              "StateOfCharge": {
+                "type": "branch",
+                "children": {
+                  "Current": {
+                    "datatype": "float",
+                    "type": "sensor",
+                    "description": "Usable battery state of charge in %, sourced from BMS_stateOfCharge (BMS_energyStatus 0x352).",
+                    "unit": "%",
+                    "min": 0.0,
+                    "max": 100.0,
+                    "dbc2vss": {
+                      "signal": "BMS_stateOfCharge",
+                      "interval_ms": 1000
+                    }
+                  }
+                }
+              },
+              "CurrentVoltage": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "High-voltage pack voltage in V, sourced from BMS_packVoltage (BMS_energyStatus 0x352). Nominal range 300–420 V.",
+                "unit": "V",
+                "min": 0.0,
+                "max": 655.35,
+                "dbc2vss": {
+                  "signal": "BMS_packVoltage",
+                  "interval_ms": 1000
+                }
+              },
+              "Temperature": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Volume-averaged battery cell temperature in degC, sourced from BMS_packTemp (BMS_energyStatus 0x352).",
+                "unit": "celsius",
+                "min": -40.0,
+                "max": 87.5,
+                "dbc2vss": {
+                  "signal": "BMS_packTemp",
+                  "interval_ms": 1000
+                }
+              }
+            }
+          }
+        }
+      },
+      "Cabin": {
+        "type": "branch",
+        "children": {
+          "HVAC": {
+            "type": "branch",
+            "children": {
+              "AmbientAirTemperature": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Cabin ambient temperature measured by HVAC sensor in degC, sourced from HVAC_cabinTemp (HVAC_status 0x243).",
+                "unit": "celsius",
+                "min": -20.0,
+                "max": 50.0,
+                "dbc2vss": {
+                  "signal": "HVAC_cabinTemp",
+                  "interval_ms": 1000
+                }
+              },
+              "Station": {
+                "type": "branch",
+                "children": {
+                  "Row1": {
+                    "type": "branch",
+                    "children": {
+                      "Driver": {
+                        "type": "branch",
+                        "children": {
+                          "Temperature": {
+                            "datatype": "float",
+                            "type": "actuator",
+                            "description": "Driver-side HVAC temperature setpoint in degC, sourced from HVAC_setpointTemp (HVAC_status 0x243). Range 16–30 degC for comfort zone.",
+                            "unit": "celsius",
+                            "min": 16.0,
+                            "max": 30.0,
+                            "dbc2vss": {
+                              "signal": "HVAC_setpointTemp",
+                              "interval_ms": 1000
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

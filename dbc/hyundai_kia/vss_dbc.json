@@ -1,0 +1,170 @@
+{
+  "_comment": "VSS-DBC mapping for Hyundai/Kia Generic CAN database.",
+  "_description": "Maps DBC signal names (from hyundai_kia_generic.dbc) to COVESA VSS paths.",
+  "_format_version": "1.0",
+  "_dbc_file": "hyundai_kia_generic.dbc",
+  "_notes": [
+    "interval_ms controls how often the kuksa-can-provider polls this signal.",
+    "Vehicle.OBD.DTCList is intentionally absent — it is a string array type",
+    "that cannot be encoded in a standard DBC signal; it is managed by the",
+    "OBD simulation layer in vehicle_sim/dtc.py instead.",
+    "transform.math expressions use 'x' as the raw decoded value (post scale/offset)."
+  ],
+  "Vehicle": {
+    "type": "branch",
+    "children": {
+      "Speed": {
+        "datatype": "float",
+        "type": "sensor",
+        "description": "Vehicle reference speed derived from wheel speed sensors.",
+        "unit": "km/h",
+        "min": 0.0,
+        "max": 200.0,
+        "dbc2vss": {
+          "signal": "VehicleSpeed",
+          "interval_ms": 100
+        }
+      },
+      "TraveledDistance": {
+        "datatype": "float",
+        "type": "sensor",
+        "description": "Cumulative odometer reading.",
+        "unit": "km",
+        "min": 0.0,
+        "dbc2vss": {
+          "signal": "TraveledDistance",
+          "interval_ms": 1000
+        }
+      },
+      "Powertrain": {
+        "type": "branch",
+        "children": {
+          "CombustionEngine": {
+            "type": "branch",
+            "children": {
+              "Speed": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Engine crankshaft rotational speed.",
+                "unit": "rpm",
+                "min": 0.0,
+                "max": 8000.0,
+                "dbc2vss": {
+                  "signal": "EngineRPM",
+                  "interval_ms": 100
+                }
+              },
+              "ECT": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Engine coolant temperature.",
+                "unit": "celsius",
+                "min": -40.0,
+                "max": 215.0,
+                "dbc2vss": {
+                  "signal": "EngineCoolantTemp",
+                  "interval_ms": 500
+                }
+              }
+            }
+          },
+          "TractionBattery": {
+            "type": "branch",
+            "children": {
+              "StateOfCharge": {
+                "type": "branch",
+                "children": {
+                  "Current": {
+                    "datatype": "float",
+                    "type": "sensor",
+                    "description": "High-voltage battery state of charge, as reported by BMS.",
+                    "unit": "percent",
+                    "min": 0.0,
+                    "max": 100.0,
+                    "dbc2vss": {
+                      "signal": "BatterySOC",
+                      "interval_ms": 1000
+                    }
+                  }
+                }
+              },
+              "CurrentVoltage": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "High-voltage battery pack terminal voltage.",
+                "unit": "V",
+                "min": 0.0,
+                "max": 6553.5,
+                "dbc2vss": {
+                  "signal": "BatteryVoltage",
+                  "interval_ms": 500
+                }
+              },
+              "Temperature": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "Average high-voltage battery pack temperature.",
+                "unit": "celsius",
+                "min": -40.0,
+                "max": 215.0,
+                "dbc2vss": {
+                  "signal": "BatteryTemp",
+                  "interval_ms": 1000
+                }
+              }
+            }
+          }
+        }
+      },
+      "Cabin": {
+        "type": "branch",
+        "children": {
+          "HVAC": {
+            "type": "branch",
+            "children": {
+              "AmbientAirTemperature": {
+                "datatype": "float",
+                "type": "sensor",
+                "description": "In-cabin ambient air temperature as measured by the HVAC sensor.",
+                "unit": "celsius",
+                "min": -20.0,
+                "max": 50.0,
+                "dbc2vss": {
+                  "signal": "AmbientTemp",
+                  "interval_ms": 1000
+                }
+              },
+              "Station": {
+                "type": "branch",
+                "children": {
+                  "Row1": {
+                    "type": "branch",
+                    "children": {
+                      "Driver": {
+                        "type": "branch",
+                        "children": {
+                          "Temperature": {
+                            "datatype": "float",
+                            "type": "actuator",
+                            "description": "Driver-side HVAC temperature set-point.",
+                            "unit": "celsius",
+                            "min": 16.0,
+                            "max": 30.0,
+                            "dbc2vss": {
+                              "signal": "SetTemp",
+                              "interval_ms": 500
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

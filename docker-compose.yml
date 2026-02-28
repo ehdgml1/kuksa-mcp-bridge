@@ -1,0 +1,90 @@
+services:
+  databroker:
+    build:
+      context: ./infra
+      dockerfile: Dockerfile.databroker
+    container_name: kuksa-databroker
+    ports:
+      - "55556:55555"
+      - "8090:8090"
+    command: >
+      --address 0.0.0.0
+      --insecure
+      --enable-viss
+    healthcheck:
+      test: ["CMD-SHELL", "/bin/grpc_health_probe -addr=:55555 -service='' || /bin/grpc_health_probe -addr=:55555 -connect-timeout=1s 2>&1 | grep -q 'does not implement' && exit 0 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: vehicle-simulator
+    env_file: .env
+    depends_on:
+      databroker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: kuksa-mcp-server
+    env_file: .env
+    depends_on:
+      databroker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: ivi-dashboard
+    ports:
+      - "5180:5173"
+    depends_on:
+      databroker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    container_name: vehicle-agent
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - KUKSA_DATABROKER_HOST=databroker
+      - KUKSA_DATABROKER_PORT=55555
+    depends_on:
+      databroker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Phase 1-B: DBC Feeder mode (alternative data source)
+  # Usage: docker compose --profile dbc-feeder up
+  # Vehicle swap: VEHICLE_PROFILE=tesla_model3 docker compose --profile dbc-feeder up
+  can-provider:
+    profiles: ["dbc-feeder"]
+    image: ghcr.io/eclipse-kuksa/kuksa-can-provider/can-provider:0.4.4
+    container_name: kuksa-can-provider
+    volumes:
+      - ./dbc/${VEHICLE_PROFILE:-hyundai_kia}:/config:ro
+    command: >
+      --dbcfile /config/*.dbc
+      --mapping /config/vss_dbc.json
+      --canport /config/candump.log
+      --server-type kuksa_databroker
+      --address databroker
+      --port 55555
+    depends_on:
+      databroker:
+        condition: service_healthy
+    restart: unless-stopped

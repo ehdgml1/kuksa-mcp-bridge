@@ -1,0 +1,140 @@
+VERSION ""
+
+NS_ :
+    NS_DESC_
+    CM_
+    BA_DEF_
+    BA_
+    VAL_
+    CAT_DEF_
+    CAT_
+    FILTER
+    BA_DEF_DEF_
+    EV_DEF_
+    EV_
+    ENVVAR_DATA_
+    SGTYPE_
+    SGTYPE_VAL_
+    BA_DEF_SGTYPE_
+    BA_DEF_SGTYPE_VAL_
+    BA_DEF_DEF_
+    BA_SGTYPE_
+    SIG_TYPE_REF_
+    SIGTYPE_VALTYPE_
+    BO_TX_BU_
+    BA_DEF_REL_
+    BA_REL_
+    BA_DEF_DEF_REL_
+    SIG_GROUP_
+    SIG_VALTYPE_
+    SIGTYPE_VALTYPE_
+    SG_MUL_VAL_
+
+BS_:
+
+BU_: ECU TCU BMS HVAC OBD VCAN_GW
+
+BO_ 256 EngineStatus: 8 ECU
+ SG_ EngineRPM : 0|16@1+ (0.125,0) [0|8000] "rpm" VCAN_GW
+ SG_ EngineCoolantTemp : 16|8@1+ (1,-40) [-40|215] "degC" VCAN_GW
+
+BO_ 512 VehicleMotion: 8 TCU
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|655.35] "km/h" VCAN_GW
+ SG_ TraveledDistance : 16|32@1+ (0.1,0) [0|429496729.5] "km" VCAN_GW
+
+BO_ 768 BatteryStatus: 8 BMS
+ SG_ BatterySOC : 0|8@1+ (0.5,0) [0|100] "%" VCAN_GW
+ SG_ BatteryVoltage : 8|16@1+ (0.1,0) [0|6553.5] "V" VCAN_GW
+ SG_ BatteryTemp : 24|8@1+ (1,-40) [-40|215] "degC" VCAN_GW
+
+BO_ 1024 HVACStatus: 4 HVAC
+ SG_ SetTemp : 0|8@1+ (0.5,0) [0|50] "degC" VCAN_GW
+ SG_ AmbientTemp : 8|8@1+ (0.5,-40) [-40|87.5] "degC" VCAN_GW
+
+BO_ 1280 DiagStatus: 2 OBD
+ SG_ DTCCount : 0|8@1+ (1,0) [0|255] "" VCAN_GW
+
+CM_ "Hyundai/Kia Generic CAN Database — kuksa-mcp-bridge project.
+Covers powertrain, motion, BMS, HVAC, and OBD status messages.
+Signals are mapped to COVESA VSS paths via vss_dbc.json.
+Byte order: Intel (little-endian, @1). All signals unsigned (+).
+Scale/offset follow the DBC convention: physical = raw * scale + offset.";
+
+CM_ BU_ ECU "Engine Control Unit — broadcasts EngineStatus @ 10 ms";
+CM_ BU_ TCU "Transmission / Wheel-speed Control Unit — broadcasts VehicleMotion @ 10 ms";
+CM_ BU_ BMS "Battery Management System — broadcasts BatteryStatus @ 100 ms";
+CM_ BU_ HVAC "HVAC Controller — broadcasts HVACStatus @ 500 ms";
+CM_ BU_ OBD "On-Board Diagnostics module — broadcasts DiagStatus @ 1000 ms";
+CM_ BU_ VCAN_GW "Virtual CAN Gateway (software consumer — vcan0)";
+
+CM_ BO_ 256 "Engine status: RPM and coolant temperature.
+ Broadcast period: 10 ms.";
+CM_ BO_ 512 "Vehicle motion: wheel-speed-derived vehicle speed and odometer.
+ Broadcast period: 10 ms.";
+CM_ BO_ 768 "High-voltage battery pack status.
+ Broadcast period: 100 ms.";
+CM_ BO_ 1024 "HVAC set-point and ambient air temperature.
+ Broadcast period: 500 ms.";
+CM_ BO_ 1280 "Diagnostic frame: count of active DTC codes.
+ Broadcast period: 1000 ms. Individual DTC values are conveyed
+ via ISO 15031-6 (OBD-II mode 03) — not encodable in a standard DBC signal.";
+
+CM_ SG_ 256 EngineRPM "Engine crankshaft speed.
+ Resolution: 0.125 rpm/bit. Raw 0x0000 = 0 rpm, 0xFFFF = 8191.875 rpm.
+ VSS: Vehicle.Powertrain.CombustionEngine.Speed";
+CM_ SG_ 256 EngineCoolantTemp "Engine coolant temperature (ECT).
+ Resolution: 1 °C/bit. Physical = raw - 40.
+ Raw 0x00 = -40 °C, 0xFF = 215 °C. Normal operating range: 80-105 °C.
+ VSS: Vehicle.Powertrain.CombustionEngine.ECT";
+CM_ SG_ 512 VehicleSpeed "Vehicle reference speed derived from wheel sensors.
+ Resolution: 0.01 km/h/bit. Raw 0x0000 = 0 km/h, 0xFFFF ≈ 655.35 km/h.
+ VSS: Vehicle.Speed";
+CM_ SG_ 512 TraveledDistance "Odometer — cumulative traveled distance.
+ Resolution: 0.1 km/bit. 32-bit counter, wraps at ~429 million km.
+ VSS: Vehicle.TraveledDistance";
+CM_ SG_ 768 BatterySOC "High-voltage battery state of charge.
+ Resolution: 0.5 %/bit. Raw 0 = 0 %, raw 200 = 100 %.
+ VSS: Vehicle.Powertrain.TractionBattery.StateOfCharge.Current";
+CM_ SG_ 768 BatteryVoltage "High-voltage battery pack terminal voltage.
+ Resolution: 0.1 V/bit. Typical range: 300-420 V.
+ VSS: Vehicle.Powertrain.TractionBattery.CurrentVoltage";
+CM_ SG_ 768 BatteryTemp "Battery pack average temperature.
+ Resolution: 1 °C/bit. Physical = raw - 40. Normal range: 20-45 °C.
+ VSS: Vehicle.Powertrain.TractionBattery.Temperature";
+CM_ SG_ 1024 SetTemp "HVAC driver-side set-point temperature.
+ Resolution: 0.5 °C/bit. Range: 16-30 °C (raw 32-60).
+ VSS: Vehicle.Cabin.HVAC.Station.Row1.Driver.Temperature";
+CM_ SG_ 1024 AmbientTemp "In-cabin ambient air temperature sensor.
+ Resolution: 0.5 °C/bit. Physical = raw * 0.5 - 40. Range: -20 to 50 °C.
+ VSS: Vehicle.Cabin.HVAC.AmbientAirTemperature";
+CM_ SG_ 1280 DTCCount "Number of currently active DTC entries stored in ECU memory.
+ Informational only — individual codes are not DBC-encodable.
+ VSS: n/a (Vehicle.OBD.DTCList is a string array, managed by OBD module)";
+
+BA_DEF_ BO_ "BusType" STRING;
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_ "GenMsgSendType" STRING;
+BA_DEF_ SG_ "SystemSignalLongSymbol" STRING;
+
+BA_DEF_DEF_ "BusType" "CAN";
+BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BA_DEF_DEF_ "GenMsgSendType" "Cyclic";
+BA_DEF_DEF_ "SystemSignalLongSymbol" "";
+
+BA_ "BusType" BO_ 256 "CAN";
+BA_ "BusType" BO_ 512 "CAN";
+BA_ "BusType" BO_ 768 "CAN";
+BA_ "BusType" BO_ 1024 "CAN";
+BA_ "BusType" BO_ 1280 "CAN";
+
+BA_ "GenMsgCycleTime" BO_ 256 10;
+BA_ "GenMsgCycleTime" BO_ 512 10;
+BA_ "GenMsgCycleTime" BO_ 768 100;
+BA_ "GenMsgCycleTime" BO_ 1024 500;
+BA_ "GenMsgCycleTime" BO_ 1280 1000;
+
+BA_ "GenMsgSendType" BO_ 256 "Cyclic";
+BA_ "GenMsgSendType" BO_ 512 "Cyclic";
+BA_ "GenMsgSendType" BO_ 768 "Cyclic";
+BA_ "GenMsgSendType" BO_ 1024 "Cyclic";
+BA_ "GenMsgSendType" BO_ 1280 "Cyclic";

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+*.whl
+
+# Node
+node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# Lock files (regenerable)
+uv.lock
+package-lock.json
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage/
+
+# Environment (CRITICAL: .env contains API keys)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker / logs (but NOT dbc candump.log which is project data)
+*.log
+!dbc/**/candump.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code / OMC state
+.omc/
+.claude/
+.playwright-mcp/
+
+# Docs (keep images for README, ignore the rest)
+docs/*
+!docs/images/
