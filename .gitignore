@@ -51,3 +51,4 @@ Thumbs.db
 # Docs (keep images for README, ignore the rest)
 docs/*
 !docs/images/
+claude.md
